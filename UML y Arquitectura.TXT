@@ -1,0 +1,71 @@
+________________________________________
+Estructura de Clases UML (Versión Mejorada)
+1. Clase Tiquetera (Clase Orquestadora Central)
+Gestiona las operaciones principales, la lógica de negocio y coordina las demás clases.
+•	Atributos:
+o	eventos: list[Evento]
+o	clientes: list[Cliente]
+o	tickets: list[Ticket]
+o	cola_compras: list: Cola de prioridad (usando heapq) con objetos SolicitudCompra.
+o	cola_ingreso: list: Cola de prioridad (usando heapq) para la simulación de ingreso.
+o	operaciones_deshacer: list: Pila (stack) con objetos Operacion.
+o	auth_manager: Auth
+o	cliente_actual: Cliente | None
+•	Métodos Principales:
+o	Gestión de Datos:
+	cargar_datos(): Usa CSVManager para leer todos los archivos CSV.
+	guardar_datos(): Usa CSVManager para escribir los datos actuales en los CSV.
+o	Lógica de Compras:
+	solicitar_compra(cliente, evento, ...): Crea y añade una SolicitudCompra a cola_compras.
+	procesar_cola_de_compras(): Procesa la siguiente solicitud validando y creando el ticket.
+o	Simulación de Ingreso:
+	simular_ingreso_evento(id_evento): Prepara y llena la cola_ingreso con los asistentes.
+	procesar_cola_ingreso(): Simula el procesamiento de la cola de ingreso (VIPs primero).
+o	Funcionalidad de Deshacer:
+	deshacer_ultima_operacion(): Ejecuta el método deshacer del último objeto Operacion en la pila.
+o	Portal del Cliente:
+	ver_compras_cliente(id_cliente): Devuelve una lista de tickets para un cliente específico.
+	obtener_eventos_disponibles(): Devuelve la lista de eventos con cupo.
+o	Validaciones:
+	validar_compra(solicitud): Verifica si una compra es válida (cupo, cliente existe, etc.).
+	validar_datos_csv(archivo, tipo): Valida la integridad de un archivo CSV antes de cargarlo.
+o	Algoritmos:
+	merge_sort_eventos(criterio): Ordena eventos usando Merge Sort.
+	quick_sort_eventos(criterio): Ordena eventos usando Quick Sort.
+________________________________________
+2. Clases de Datos Fundamentales (Evento, Cliente, Ticket)
+Estas clases se mantienen como contenedores de datos, sin cambios mayores en su estructura.
+•	Clase Evento: id_evento, nombre, fecha_iso, capacidades, precios, etc.
+•	Clase Cliente: id_cliente, nombre, es_platinum, hash_clave.
+•	Clase Ticket: id_ticket, id_evento, id_cliente, sector, estado, etc.
+________________________________________
+3. Clases Auxiliares y de Soporte
+Estas clases encapsulan lógica específica, haciendo el código más modular y limpio.
+•	Clase SolicitudCompra:
+o	Atributos: cliente, evento, sector, cantidad, timestamp, prioridad.
+o	Métodos: calcular_prioridad() (devuelve 0 para Platinum, 1 para normal), __lt__() (para que heapq pueda comparar).
+•	Clase Operacion:
+o	Atributos: tipo ('compra', 'cancelacion'), datos (diccionario con la info para revertir).
+o	Métodos: deshacer(tiquetera_ref) (método que revierte la operación en la instancia de Tiquetera).
+•	Clase Auth:
+o	Atributos: lista_clientes, intentos_fallidos: dict (ej: {'C001': 2}), MAX_INTENTOS.
+o	Métodos: autenticar(id, clave) (ahora verifica y actualiza los intentos fallidos), verificar_bloqueo(id).
+________________________________________
+4. Clases de Gestión (Managers)
+Clases dedicadas a tareas transversales como el manejo de archivos y logs.
+•	Clase CSVManager (Estática):
+o	Métodos: leer_csv(archivo, esquema_validacion), escribir_csv(archivo, datos).
+•	Clase Logger (Estática):
+o	Métodos: log_error(mensaje), log_operacion(tipo, detalles), log_acceso(id_cliente, resultado).
+•	Clase Config (Estática):
+o	Atributos: SECTORES, ESTADOS_TICKET, FORMATO_FECHA, SALT_HASH.
+________________________________________
+Relaciones Clave en el Diseño Mejorado
+•	Delegación: La clase Tiquetera delega la responsabilidad del manejo de archivos a CSVManager. En lugar de tener la lógica de lectura/escritura dentro de sí misma, simplemente llama a los métodos de CSVManager.
+•	Dependencia de Servicios: Prácticamente todas las clases (especialmente Tiquetera y Auth) dependen de Logger para registrar sus actividades y de Config para obtener valores constantes. Esto centraliza la configuración y el registro de eventos.
+•	Composición y Agregación: Las relaciones originales se mantienen. Tiquetera sigue componiendo a Auth y agregando las listas de Evento, Cliente y Ticket.
+•	Uso de Estructuras de Datos: Tiquetera usa las clases SolicitudCompra y Operacion para poblar sus estructuras de datos internas (cola_compras y operaciones_deshacer).
+
+El archivo project_context es para que le puedan dar el contexto a la IA 
+Prohibido meter alguna linea de codigo que no sepan como funciona 
+Trabajar en base a esto si algo no les parece lo dicen y lo hablamos y lo cambiamos 
