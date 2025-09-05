@@ -1,0 +1,4 @@
+id_evento,nombre,fecha_iso,cap_grad,cap_gram,cap_vip,precio_grad,precio_gram,precio_vip
+E001,Rock en el Parque,2025-09-20,12000,8000,1000,15000,30000,80000
+E002,Sinfonía bajo las Estrellas,2025-10-05,10000,7000,900,20000,35000,90000
+E003,Electro Night,2025-11-12,14000,9000,1200,18000,32000,85000
