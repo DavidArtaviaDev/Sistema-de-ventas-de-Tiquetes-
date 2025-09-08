@@ -6,3 +6,5 @@ class Evento:
 		self.fecha_iso = fecha_iso  # str: Fecha en formato YYYY-MM-DD
 		self.capacidades = capacidades  # dict: {'GRAD': int, 'GRAM': int, 'VIP': int}
 		self.precios = precios          # dict: {'GRAD': float, 'GRAM': float, 'VIP': float}
+
+
