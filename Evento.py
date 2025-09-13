@@ -1,5 +1,6 @@
 # Clase Evento para el sistema de tiquetera
 class Evento:
+
   def __init__(self, id_evento, nombre, fecha_iso, cap_grad, cap_gram, cap_vip, precio_grad, precio_gram, precio_vip): 
          if not id_evento or not nombre: #verifica que no esten vacios
             raise ValueError("El ID y el nombre del evento son obligatorios.")
@@ -53,3 +54,6 @@ class Evento:
                 f"Gramilla={self.capacidades['Gramilla']}, VIP={self.capacidades['VIP']} | "
                 f"Precios: Gradería={self.precios['Graderia']}, "
                 f"Gramilla={self.precios['Gramilla']}, VIP={self.precios['VIP']}")
+
+
+
