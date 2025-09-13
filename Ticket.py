@@ -2,7 +2,7 @@ from datetime import datetime
 from Config import Config
 
 class Ticket:
-    def __init__(self, id_ticket, id_evento, id_cliente, sector, precio, estado="Activo", fecha_compra=None):
+    def __init__(self, id_ticket, id_evento, id_cliente, sector, precio, estado="emitido", fecha_compra=None):
         if sector not in Config.SECTORES:
             raise ValueError(f"Sector invalido. Debe ser uno de {Config.SECTORES}")
         if estado not in Config.ESTADOS_TICKET:
