@@ -175,7 +175,7 @@ class Tiquetera:
     def menuCliente(self):
         print("\n--- Menú Cliente ---")
         print("1 - Ver todos los eventos")
-        print("2 - Buscar evento por ID")
+        print("2 - Ordenar eventos por criterio")
         print("3 - Comprar tiquete")
         print("4 - Ver mis tiquetes")
         print("5 - Cerrar sesión")
@@ -183,18 +183,21 @@ class Tiquetera:
         if opcion == "1":
             self.verTodosLosEventos()
         elif opcion == "2":
-           # self.buscarEventoPorID()
-           print("No implementado aun")
+        
+            self.menuOrdenarEventos()
+
         elif opcion == "3":
-            #self.comprarTiquete()
-                print("No implementado aun")
+            print("No implementado aun")
+
         elif opcion == "4":
-           # self.verMisTiquetes()
-             print("No implementado aun")
+            print("No implementado aun")
+           
         elif opcion == "5":
-            self.cliente_actual = None
+           
             print("\nSesión cerrada.")
+            self.cliente_actual = None
             self.mostraMenuPrincipal()
+
         else:
             print("\nOpción no válida. Por favor, intente de nuevo.")
 
@@ -204,6 +207,99 @@ class Tiquetera:
             print(evento)
 
     
-    
 
+
+
+
+
+    # ordenaientos quicksort y mergesort
+    def menuOrdenarEventos(self):
+        print("\n--- Menú de Ordenamiento de Eventos ---")
+        print("1 - Quicksort")
+        print("2 - Mergesort")
+        print("3 - Volver al menú anterior")
+        opcion = input("\nSeleccione una opción: ").strip()
+        
+        if opcion == "1":
+            print("No implementado aun")
+        
+        elif opcion == "2":
+            print("\nCriterios disponibles para ordenar:")
+            print("1 - id_evento")
+            print("2 - nombre")
+            print("3 - fecha_iso")
+            print("4 - cap_grad")
+            print("5 - cap_gram")
+            print("6 - cap_vip")
+            print("7 - precio_grad")
+            print("8 - precio_gram")
+            print("9 - precio_vip")
+            opcion_criterio = input("Seleccione un criterio: ").strip()
+            if opcion_criterio == "1":
+                criterio = "id_evento"
+            elif opcion_criterio == "2":
+                criterio = "nombre"
+            elif opcion_criterio == "3":
+                criterio = "fecha_iso"
+            elif opcion_criterio == "4":
+                criterio = "cap_grad"
+            elif opcion_criterio == "5":
+                criterio = "cap_gram"
+            elif opcion_criterio == "6":
+                criterio = "cap_vip"
+            elif opcion_criterio == "7":
+                criterio = "precio_grad"
+            elif opcion_criterio == "8":
+                criterio = "precio_gram"
+            elif opcion_criterio == "9":
+                criterio = "precio_vip"
+            else:
+                print("Criterio no válido. Usando 'id_evento' por defecto.")
+                criterio = "id_evento"
+
+            eventos_ordenados = self.mergeSortRecursivo(self.eventos, criterio)
+            print("\n--- Eventos Ordenados (Mergesort) ---")
+            for evento in eventos_ordenados:
+                print(evento)
+
+
+        
+        elif opcion == "3":
+            return  # Volver al menú anterior
+        
+        else:
+            print("\nOpción no válida. Por favor, intente de nuevo.")
+
+    def mergeSortRecursivo(self,lista: list, criterio: str) -> list:
+       
+       if len(lista) <= 1:
+            return lista
+       
+       medio = len(lista) // 2
+       izquierda = lista[:medio]
+       derecha = lista[medio:]
+
+       izquierda_ordenada = self.mergeSortRecursivo(izquierda, criterio)
+       derecha_ordenada = self.mergeSortRecursivo(derecha, criterio)
+       
+       return self.merge(izquierda_ordenada, derecha_ordenada, criterio)    
+    
+    def merge(self, izquierda: list, derecha: list, criterio: str) -> list:
+        resultado = []
+        i = j = 0
+
+        while i < len(izquierda) and j < len(derecha):
+            valor_izquierda = getattr(izquierda[i], criterio)
+            valor_derecha = getattr(derecha[j], criterio)
+         
+            if valor_izquierda <= valor_derecha:
+                resultado.append(izquierda[i])
+                i += 1
+            else:
+                resultado.append(derecha[j])
+                j += 1
+
+        resultado.extend(izquierda[i:])
+        resultado.extend(derecha[j:])
+        return resultado
 
