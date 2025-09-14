@@ -33,9 +33,6 @@ class Tiquetera:
 
             if opcion == "1":
                 self.inicioDeSesion()
-                #mostrar el menu del cliente autenticado
-                #if self.cliente_actual is not None:
-                   # self.mostrarMenuCliente()
                   
             elif opcion == "2":
                 print("\n[Registrar cliente seleccionado]")
@@ -66,6 +63,7 @@ class Tiquetera:
          if resultado == "EXITO" and self.cliente_actual is not None:
             
             print(f"\n¡Bienvenido, {self.cliente_actual.nombre}!") 
+            self.menuCliente()
             
 
          elif resultado == "CLAVE_INCORRECTA":
@@ -95,13 +93,17 @@ class Tiquetera:
       
         # 1. Usamos  CSVManager para llenar la lista de clientes.
         self.clientes = CSVManager.cargar_clientes("clientes.csv")
+        
         self.tickets = CSVManager.cargar_tickets("tickets.csv")
+
+        self.eventos = CSVManager.cargar_eventos("eventos.csv")
         
         # 2. Creamos la instancia de Auth con la lista de clientes ya cargada.
         self.auth = Auth(self.clientes)
         
         # para saber cuantos clientes se cargaron
         print(f"¡Listo! Se cargaron {len(self.clientes)} clientes.")
+        # para saber cuantos tiquetes se cargaron
         print(f"¡Listo! Se cargaron {len(self.tickets)} tiquetes.")
         
 
@@ -132,7 +134,7 @@ class Tiquetera:
         for cliente in self.clientes:
             print(cliente)
 
-    #TRABAJANDO AQUI falta agregar la carga de tiquetes para que funcione
+   
     def buscarClientePorIDYtiques(self):
         id_buscar = input("Ingrese el ID del cliente a buscar: ").strip()
 
@@ -167,6 +169,9 @@ class Tiquetera:
         else: # Si la lista está vacía
             print("No se encontraron tiquetes para este cliente.")
 
+
+
+
     def menuCliente(self):
         print("\n--- Menú Cliente ---")
         print("1 - Ver todos los eventos")
@@ -175,7 +180,29 @@ class Tiquetera:
         print("4 - Ver mis tiquetes")
         print("5 - Cerrar sesión")
         opcion = input("\nSeleccione una opción: ").strip()
-        
+        if opcion == "1":
+            self.verTodosLosEventos()
+        elif opcion == "2":
+           # self.buscarEventoPorID()
+           print("No implementado aun")
+        elif opcion == "3":
+            #self.comprarTiquete()
+                print("No implementado aun")
+        elif opcion == "4":
+           # self.verMisTiquetes()
+             print("No implementado aun")
+        elif opcion == "5":
+            self.cliente_actual = None
+            print("\nSesión cerrada.")
+            self.mostraMenuPrincipal()
+        else:
+            print("\nOpción no válida. Por favor, intente de nuevo.")
+
+    def verTodosLosEventos(self):
+        print("\n--- Lista de Eventos ---")
+        for evento in self.eventos:
+            print(evento)
+
     
     
 
