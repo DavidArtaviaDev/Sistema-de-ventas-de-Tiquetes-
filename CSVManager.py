@@ -68,14 +68,15 @@ class CSVManager:
 
         return clientes
     
-    # def obtener_ultimo_id_evento(filename="eventos.csv"):
-    #     with open(filename, "r", encoding="utf-8") as file:
+    @staticmethod
+    def obtener_ultimo_id_evento(filename="eventos.csv"):
+        with open(filename, "r", encoding="utf-8") as file:
 
-    #         reader = csv.DictReader(file) #abre el csv y lo lee
-    #         ids = [row["id_evento"] for row in reader] #estrae todos los ids
-    #         last_id = ids[-1] #toma el ultimo id
-    #         numero = int(last_id[1:]) + 1 #quita la parte numerica del id y le suma 1
-    #         return f"E{numero:03d}" #devuelve el id con la letra
+             reader = csv.DictReader(file) #abre el csv y lo lee
+             ids = [row["id_evento"] for row in reader] #estrae todos los ids
+             last_id = ids[-1] #toma el ultimo id
+             numero = int(last_id[1:]) + 1 #quita la parte numerica del id y le suma 1
+             return f"E{numero:03d}" #devuelve el id con la letra
 
     @staticmethod
     def obtener_ultimo_id_cliente(filename="clientes.csv"):

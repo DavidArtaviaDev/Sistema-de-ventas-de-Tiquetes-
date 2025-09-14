@@ -35,13 +35,30 @@ class Tiquetera:
                 self.inicioDeSesion()
                   
             elif opcion == "2":
-                print("\n[Registrar cliente seleccionado]")
+                self.registrarCliente()
                 
             elif opcion == "3":
                 break
             else:
                 print("\nOpción no válida. Por favor, intente de nuevo.")
  
+
+    def registrarCliente(self):
+         id_c = CSVManager.obtener_ultimo_id_cliente()
+         nombre = input("Nombre: ")
+         es_plat = input("¿Es Platinum? (si/no): ")
+         clave = input("Clave: ")
+         try:
+                cliente = Cliente(id_c, nombre, es_plat, clave)
+                self.clientes.append(cliente)                   # guardar en memoria
+                CSVManager.guardar_clientes(cliente)       # guardar en CSV
+                print(f"Cliente '{nombre}' registrado y guardado en CSV.") 
+                print("Su ID de cliente es:", id_c)
+         except ValueError as e:
+                print(f"Error: {e}")
+
+
+
     def inicioDeSesion(self):
 
         print  ("\nDigite 1 para cliente o 2 para admin")
@@ -122,8 +139,8 @@ class Tiquetera:
            self.buscarClientePorIDYtiques()
       
         elif opcion == "3":
-            #self.agregarEvento()
-              print("No implementado aun")
+              self.crearEventoNuevo()  
+              
         elif opcion == "4":
            # self.cliente_actual = None
             print("\nSesión de admin cerrada.")
@@ -169,7 +186,43 @@ class Tiquetera:
         else: # Si la lista está vacía
             print("No se encontraron tiquetes para este cliente.")
 
+    def crearEventoNuevo(self):
+        """
+        Pide al usuario los datos para un nuevo evento, lo crea,
+        lo añade a la lista en memoria y lo guarda en el CSV.
+        """
+        print("\n--- Creando Nuevo Evento ---")
+        try:
+            # Obtenemos los datos del usuario
+            # (Asumo que CSVManager.obtener_ultimo_id_evento existe y funciona)
+            id_e = CSVManager.obtener_ultimo_id_evento()
+            nombre = input("Nombre del evento: ")
+            fecha = input("Fecha (YYYY-MM-DD): ")
+            cap_grad = input("Capacidad gradería: ")
+            cap_gram = input("Capacidad gramilla: ")
+            cap_vip = input("Capacidad VIP: ")
+            precio_grad = input("Precio gradería: ")
+            precio_gram = input("Precio gramilla: ")
+            precio_vip = input("Precio VIP: ")
 
+            # Creamos la instancia del Evento (esto puede fallar si los datos son inválidos)
+            evento = Evento(id_e, nombre, fecha, cap_grad, cap_gram, cap_vip,
+                            precio_grad, precio_gram, precio_vip)
+            
+            # Usamos self.eventos, el atributo de la clase
+            self.eventos.append(evento)
+            
+            # Guardamos en el archivo CSV (tu método parece guardar de uno en uno)
+            CSVManager.guardar_eventos(evento)
+            
+            print(f"\n¡Éxito! Evento '{nombre}' agregado y guardado.")
+
+        except ValueError as e:
+            # Capturamos los errores de validación del constructor de Evento
+            print(f"\nError al crear el evento: {e}")
+        except Exception as e:
+            # Capturamos cualquier otro error inesperado
+            print(f"\nOcurrió un error inesperado: {e}")
 
 
     def menuCliente(self):
