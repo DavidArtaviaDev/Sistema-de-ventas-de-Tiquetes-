@@ -4,6 +4,7 @@ from Auth import Auth
 from CSVManager import CSVManager
 from Cliente import Cliente
 from Evento import Evento
+from GestorTicket import GestorTicket
 
 class Tiquetera:
 
@@ -11,7 +12,9 @@ class Tiquetera:
 
     def __init__(self):
         self.clientes = []
-      
+        self.eventos = []
+        self.tickets = []
+
         self.cliente_actual = None  # Cliente autenticado actualmente el que esta utilizando la aplicacion en momento
         self.auth = None    # Objeto Auth para manejar autenticaciones se carga en la funcion cargarDatos
 
@@ -83,7 +86,7 @@ class Tiquetera:
         
          if id_admin == "admin" and clave_admin == "admin123":
             print("\n¡Bienvenido, Admin!")
-            # Aquí puedes agregar el menú o funcionalidades específicas para el admin
+            self.menuAdmin()
          else:
             print("\nCredenciales de admin incorrectas. Por favor, intente de nuevo.")
  
@@ -92,20 +95,88 @@ class Tiquetera:
       
         # 1. Usamos  CSVManager para llenar la lista de clientes.
         self.clientes = CSVManager.cargar_clientes("clientes.csv")
+        self.tickets = CSVManager.cargar_tickets("tickets.csv")
         
         # 2. Creamos la instancia de Auth con la lista de clientes ya cargada.
         self.auth = Auth(self.clientes)
         
         # para saber cuantos clientes se cargaron
         print(f"¡Listo! Se cargaron {len(self.clientes)} clientes.")
+        print(f"¡Listo! Se cargaron {len(self.tickets)} tiquetes.")
         
 
     def menuAdmin(self):
         print("\n--- Menú Admin ---")
         print("1 - Ver todos los clientes")
-        print("2 - Buscar cliente por ID")
+        print("2 - Buscar cliente por ID y sus tiquetes")
         print("3 - Agregar evento")
         print("4 - Cerrar sesión")
         opcion = input("\nSeleccione una opción: ").strip()
+        if opcion == "1":
+         print("\n--- Lista de Clientes ---")
+         self.verTodosLosClientes()
+        
+        elif opcion == "2":
+           self.buscarClientePorIDYtiques()
+      
+        elif opcion == "3":
+            #self.agregarEvento()
+              print("No implementado aun")
+        elif opcion == "4":
+           # self.cliente_actual = None
+            print("\nSesión de admin cerrada.")
+        else:
+            print("\nOpción no válida. Por favor, intente de nuevo.")
 
-     
+    def verTodosLosClientes(self):
+        for cliente in self.clientes:
+            print(cliente)
+
+    #TRABAJANDO AQUI falta agregar la carga de tiquetes para que funcione
+    def buscarClientePorIDYtiques(self):
+        id_buscar = input("Ingrese el ID del cliente a buscar: ").strip()
+
+    # 1. Inicializamos las variables ANTES de los bucles.
+        cliente_encontrado = None
+    
+    # 2. Buscamos al cliente. Si lo encontramos, lo guardamos y rompemos el bucle.
+        for cliente in self.clientes:
+            if cliente.id_cliente == id_buscar:
+             cliente_encontrado = cliente
+             break
+            
+    # 3. SI NO SE ENCUENTRA el cliente, informamos y terminamos la función con 'return'.
+        if not cliente_encontrado:
+         print("\nCliente no encontrado.")
+         return # Esto detiene la ejecución de la función aquí mismo.
+
+    # 4. Si llegamos aquí, es porque el cliente SÍ se encontró. Lo mostramos.
+        print(f"\nCliente encontrado: {cliente_encontrado}")
+    
+    # 5. Buscamos y guardamos TODOS los tiquetes del cliente en una nueva lista.
+        tickets_del_cliente = []
+        for ticket in self.tickets:
+            if ticket.id_cliente == id_buscar:
+             tickets_del_cliente.append(ticket)
+            
+    # 6. Al final, revisamos si la lista de tiquetes tiene algo o está vacía.
+        if tickets_del_cliente: # Esto es True si la lista no está vacía
+            print("Tiquetes encontrados para este cliente:")
+            for ticket in tickets_del_cliente:
+                print(ticket) # Imprimimos cada tiquete encontrado
+        else: # Si la lista está vacía
+            print("No se encontraron tiquetes para este cliente.")
+
+    def menuCliente(self):
+        print("\n--- Menú Cliente ---")
+        print("1 - Ver todos los eventos")
+        print("2 - Buscar evento por ID")
+        print("3 - Comprar tiquete")
+        print("4 - Ver mis tiquetes")
+        print("5 - Cerrar sesión")
+        opcion = input("\nSeleccione una opción: ").strip()
+        
+    
+    
+
+

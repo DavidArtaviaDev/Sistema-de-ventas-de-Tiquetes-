@@ -2,7 +2,9 @@
 import csv
 from Evento import Evento
 from Cliente import Cliente
+from Ticket import Ticket
 import os
+
 class CSVManager:
     @staticmethod
     def guardar_eventos(eventos, filename="eventos.csv"):
@@ -66,14 +68,14 @@ class CSVManager:
 
         return clientes
     
-    def obtener_ultimo_id_evento(filename="eventos.csv"):
-        with open(filename, "r", encoding="utf-8") as file:
+    # def obtener_ultimo_id_evento(filename="eventos.csv"):
+    #     with open(filename, "r", encoding="utf-8") as file:
 
-            reader = csv.DictReader(file) #abre el csv y lo lee
-            ids = [row["id_evento"] for row in reader] #estrae todos los ids
-            last_id = ids[-1] #toma el ultimo id
-            numero = int(last_id[1:]) + 1 #quita la parte numerica del id y le suma 1
-            return f"E{numero:03d}" #devuelve el id con la letra
+    #         reader = csv.DictReader(file) #abre el csv y lo lee
+    #         ids = [row["id_evento"] for row in reader] #estrae todos los ids
+    #         last_id = ids[-1] #toma el ultimo id
+    #         numero = int(last_id[1:]) + 1 #quita la parte numerica del id y le suma 1
+    #         return f"E{numero:03d}" #devuelve el id con la letra
 
     @staticmethod
     def obtener_ultimo_id_cliente(filename="clientes.csv"):
@@ -112,3 +114,24 @@ class CSVManager:
             for fila in filas:
                 writer.writerow(fila)
 
+
+    @staticmethod
+    def cargar_tickets(filename="tickets.csv"):
+        tickets = []
+        try:
+            with open(filename, "r", encoding="utf-8") as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    try:
+                        ticket = Ticket(
+                            row["id_ticket"], row["id_evento"], row["id_cliente"],
+                            row["sector"], float(row["precio"]), row["estado"],
+                            row["fecha_compra"]
+                        )
+                        tickets.append(ticket)
+                    except (ValueError, KeyError) as e:
+                        print(f"Error al procesar fila de ticket: {e}")
+        except FileNotFoundError:
+            print(f"Archivo de tickets no encontrado: {filename}")
+        
+        return tickets
