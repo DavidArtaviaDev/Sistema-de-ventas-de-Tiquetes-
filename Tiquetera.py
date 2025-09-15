@@ -172,7 +172,7 @@ class Tiquetera:
                     print("No tienes entradas registradas.")
 
             elif opcion == "2":
-                # 🔧 FIX: aquí antes estaba mal llamado
+             
                 CSVManager.mostrar_eventos(self.eventos)
                 if not self.eventos:
                     continue

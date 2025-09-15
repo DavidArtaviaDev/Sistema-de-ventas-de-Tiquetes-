@@ -8,7 +8,7 @@ class GestorTicket:
     def __init__(self):
         self.tickets = []
         self.pila_undo = []   # pila de operaciones
-        # ✅ ahora se cargan los tickets desde CSVManager
+        #ahora se cargan los tickets desde CSVManager
         self.tickets = CSVManager.cargarTickets(Config.ARCHIVO_TICKETS)
 
     # generar ID automático
