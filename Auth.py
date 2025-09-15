@@ -46,4 +46,5 @@ class Auth:
             self.intentos_fallidos[id_cliente] = self.intentos_fallidos.get(id_cliente, 0) + 1
             if self.intentos_fallidos.get(id_cliente, 0) >= self.MAX_INTENTOS:
                 return "CUENTA_BLOQUEADA", None
-            return "CLAVE_INCORRECTA", None
+            return "CLAVE_INCORRECTA", None 
+        
