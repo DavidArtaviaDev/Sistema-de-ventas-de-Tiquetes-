@@ -37,6 +37,8 @@ class CSVManager:
         except FileNotFoundError: #para que el programa no se detenga
             print(f" No se encontró {filename}")
         return eventos
+    
+    
 
     @staticmethod
     def guardar_clientes(clientes, filename="clientes.csv"):
@@ -112,3 +114,20 @@ class CSVManager:
             for fila in filas:
                 writer.writerow(fila)
 
+     # --- NUEVO: método para mostrar eventos (movido desde Tiquetera) ---
+    @staticmethod
+    def mostrar_eventos(eventos=None, filename="eventos.csv"):
+        """
+        Muestra eventos por consola.
+        - Si se pasa `eventos` (lista de Evento), los muestra.
+        - Si no se pasa, carga desde CSV y muestra lo cargado.
+        """
+        if eventos is None:
+            eventos = CSVManager.cargar_eventos(filename)
+        if not eventos:
+            print("No hay eventos disponibles.")
+            return
+        print("\n--- EVENTOS DISPONIBLES ---")
+        for i, e in enumerate(eventos, 1):
+            print(f"{i}. {e}")
+    # --- FIN NUEVO ---

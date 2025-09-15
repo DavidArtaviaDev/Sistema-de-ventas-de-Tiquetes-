@@ -2,6 +2,7 @@ from Ticket import Ticket
 from CSVManager import CSVManager
 from Config import Config
 from Operacion import Operacion
+from datetime import datetime #para mostrar la fecha y timpo actual 
 
 class GestorTicket:
     def __init__(self):
@@ -168,3 +169,80 @@ class GestorTicket:
         # Guardar cambios en CSV después de revertir
         self.guardar_csv()
         return True
+    
+    
+    #----------------------------------------------------------------------------------------------------------------
+    
+    def comprar_ticket(self, cliente, evento, sector):
+        """Compra un ticket para un cliente autenticado en un sector específico"""
+    
+    #   Normalizar del sector 
+        sector = sector.strip().lower()
+        if sector == "vip":
+            sector = "VIP"
+        elif sector == "graderia":
+            sector = "Graderia"
+        elif sector == "gramilla":
+            sector = "Gramilla"
+        
+        # Validar sector
+        if sector not in Config.SECTORES:
+            print(f"Error: sector inválido. Debe ser uno de {Config.SECTORES}")
+            return False
+
+        # Verificar disponibilidad
+        disponibles = evento.capacidades.get(sector, 0)
+        if disponibles <= 0:
+            print(f"No hay cupos disponibles en {sector} para el evento {evento.nombre}.")
+            return False
+
+        # Mostrar disponibilidad
+        print(f"Disponibilidad en {sector}: {disponibles} entradas.")
+
+        # Crear ticket
+        nuevo_ticket = Ticket(
+            id_ticket="",  # se genera automático
+            id_evento=evento.id_evento,
+            id_cliente=cliente.id_cliente,
+            sector=sector,
+            precio=evento.precios[sector],
+            estado="emitido",
+            fecha_compra=datetime.now().strftime("%Y-%m-%d")
+        )
+        self.crear_ticket(nuevo_ticket)
+
+        # Reducir cupo en el evento
+        evento.capacidades[sector] -= 1
+         # Cargar todos los eventos existentes
+        eventos = CSVManager.cargar_eventos()
+        
+        #self.guardar_eventos([evento])  # Guardar cambios en CSV de eventos
+        
+        
+        
+         # Reemplazar el evento comprado con el actualizado
+        for i, ev in enumerate(eventos):
+            if ev.id_evento == evento.id_evento:
+                eventos[i] = evento
+                break
+
+        # Guardar de nuevo todos los eventos
+        fieldnames = [
+            "id_evento","nombre","fecha_iso",
+            "cap_grad","cap_gram","cap_vip",
+            "precio_grad","precio_gram","precio_vip"
+        ]
+        filas = [e.to_dict() for e in eventos]
+        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)
+
+        print(f"✓ Ticket comprado con éxito: {nuevo_ticket}")
+        return True
+
+    #def guardar_eventos(self, lista_eventos):
+      #  """Guarda eventos en eventos.csv después de modificar cupos"""
+       # filas = [e.to_dict() for e in lista_eventos]
+       # CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, [
+           # "id_evento","nombre","fecha_iso",
+           # "cap_grad","cap_gram","cap_vip",
+           # "precio_grad","precio_gram","precio_vip"
+       # ], filas)
