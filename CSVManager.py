@@ -1,29 +1,73 @@
-
 import csv
+import os
 from Evento import Evento
 from Cliente import Cliente
-import os
-class CSVManager:
-    @staticmethod
-    def guardar_eventos(eventos, filename="eventos.csv"):
-        existe = os.path.exists(filename) #comprueba que el archivo exista
-        with open(filename, "a", newline="", encoding="utf-8") as file: #abre el archivo en modo append
+from Ticket import Ticket
 
-            fieldnames = ["id_evento","nombre","fecha_iso","cap_grad","cap_gram","cap_vip", #define los nombres de las columnas
+class CSVManager:
+    # ===========================
+    # MÉTODOS PARA TICKETS
+    # ===========================
+    @staticmethod
+    def cargarTickets(filename="tickets.csv"):
+        """Carga los tickets desde un archivo CSV y devuelve lista de Ticket"""
+        fieldnames = ["id_ticket", "id_evento", "id_cliente", "sector", "precio", "estado", "fecha_compra"]
+        filas = CSVManager.cargar_csv(filename, fieldnames)
+        tickets = []
+        for fila in filas:
+            try:
+                ticket = Ticket(
+                    fila["id_ticket"],
+                    fila["id_evento"],
+                    fila["id_cliente"],
+                    fila["sector"],
+                    float(fila["precio"]),
+                    fila["estado"],
+                    fila["fecha_compra"]
+                )
+                tickets.append(ticket)
+            except (ValueError, KeyError) as e:
+                print(f"Error al cargar ticket: {e}")
+        return tickets
+
+    @staticmethod
+    def guardarTickets(tickets, filename="tickets.csv"):
+        """Guarda la lista de Ticket en el archivo CSV"""
+        fieldnames = ["id_ticket", "id_evento", "id_cliente", "sector", "precio", "estado", "fecha_compra"]
+        filas = []
+        for ticket in tickets:
+            filas.append({
+                "id_ticket": ticket.id_ticket,
+                "id_evento": ticket.id_evento,
+                "id_cliente": ticket.id_cliente,
+                "sector": ticket.sector,
+                "precio": str(ticket.precio),
+                "estado": ticket.estado,
+                "fecha_compra": ticket.fecha_compra
+            })
+        CSVManager.guardar_csv(filename, fieldnames, filas)
+
+    # ===========================
+    # MÉTODOS PARA EVENTOS
+    # ===========================
+    @staticmethod
+    def guardar_eventos(evento, filename="eventos.csv"):
+        existe = os.path.exists(filename)
+        with open(filename, "a", newline="", encoding="utf-8") as file:
+            fieldnames = ["id_evento","nombre","fecha_iso","cap_grad","cap_gram","cap_vip",
                           "precio_grad","precio_gram","precio_vip"]
-            
-            writer = csv.DictWriter(file, fieldnames=fieldnames) #crea un escritor de diccionarios 
-            if not existe or os.path.getsize(filename) == 0: #si el archivo no existe o esta vacio
-                writer.writeheader() #escribe la primera fila del CSV con los nombres de las columnas
-            writer.writerow(eventos.to_dict()) #escribe los datos del diccionario que estan en la clase evento
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            if not existe or os.path.getsize(filename) == 0:
+                writer.writeheader()
+            writer.writerow(evento.to_dict())
 
     @staticmethod
     def cargar_eventos(filename="eventos.csv"):
         eventos = []
         try:
-            with open(filename, "r", encoding="utf-8") as file: #abre el csv en modo lectura
-                reader = csv.DictReader(file) #lee cada fila 
-                for row in reader: #Por cada fila crea un objeto Evento y lo agrega a la lista eventos
+            with open(filename, "r", encoding="utf-8") as file:
+                reader = csv.DictReader(file)
+                for row in reader:
                     try:
                         evento = Evento(
                             row["id_evento"], row["nombre"], row["fecha_iso"],
@@ -32,71 +76,68 @@ class CSVManager:
                         )
                         eventos.append(evento)
                     except Exception:
-                        # Si hay algún error con esa fila, simplemente la salta
                         continue
-        except FileNotFoundError: #para que el programa no se detenga
-            print(f" No se encontró {filename}")
+        except FileNotFoundError:
+            print(f"No se encontró {filename}")
         return eventos
-    
-    
 
+    # ===========================
+    # MÉTODOS PARA CLIENTES
+    # ===========================
     @staticmethod
-    def guardar_clientes(clientes, filename="clientes.csv"):
-       existe = os.path.exists(filename)
-       with open(filename, "a", newline="", encoding="utf-8") as file:
-
-        fieldnames = ["id_cliente","nombre","es_platinum","hash_clave"]
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        if not existe or os.path.getsize(filename) == 0:
-            writer.writeheader()
-        writer.writerow(clientes.to_dict())
+    def guardar_clientes(cliente, filename="clientes.csv"):
+        existe = os.path.exists(filename)
+        with open(filename, "a", newline="", encoding="utf-8") as file:
+            fieldnames = ["id_cliente","nombre","es_platinum","hash_clave"]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            if not existe or os.path.getsize(filename) == 0:
+                writer.writeheader()
+            writer.writerow(cliente.to_dict())
 
     @staticmethod
     def cargar_clientes(filename="clientes.csv"):
         clientes = []
         try:
-            with open(filename, "r") as file:
+            with open(filename, "r", encoding="utf-8") as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     platinum_str = "si" if row["es_platinum"].lower() == "true" else "no"
                     cliente = Cliente(row["id_cliente"], row["nombre"], platinum_str, "dummy")
-                    cliente.hash_clave = row["hash_clave"]  # usar el hash ya guardado
+                    cliente.hash_clave = row["hash_clave"]
                     clientes.append(cliente)
-
         except FileNotFoundError:
             print(f"No se encontró {filename}")
-
         return clientes
-    
+
+    # ===========================
+    # UTILIDADES GENERALES
+    # ===========================
+    @staticmethod
     def obtener_ultimo_id_evento(filename="eventos.csv"):
         with open(filename, "r", encoding="utf-8") as file:
-
-            reader = csv.DictReader(file) #abre el csv y lo lee
-            ids = [row["id_evento"] for row in reader] #estrae todos los ids
-            last_id = ids[-1] #toma el ultimo id
-            numero = int(last_id[1:]) + 1 #quita la parte numerica del id y le suma 1
-            return f"E{numero:03d}" #devuelve el id con la letra
+            reader = csv.DictReader(file)
+            ids = [row["id_evento"] for row in reader]
+            last_id = ids[-1]
+            numero = int(last_id[1:]) + 1
+            return f"E{numero:03d}"
 
     @staticmethod
     def obtener_ultimo_id_cliente(filename="clientes.csv"):
         with open(filename, "r", encoding="utf-8") as file:
-
             reader = csv.DictReader(file)
             ids = [row["id_cliente"] for row in reader]
             last_id = ids[-1]
             numero = int(last_id[1:]) + 1
             return f"C{numero:04d}"
 
-
     @staticmethod
     def cargar_csv(ruta, fieldnames):
-        """Lee un archivo CSV y devuelve una lista de diccionarios."""
+        """Lee un archivo CSV y devuelve lista de diccionarios."""
         filas = []
         try:
             with open(ruta, mode="r", newline="", encoding="utf-8") as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    # Validar que tenga todas las columnas esperadas
                     if all(campo in row for campo in fieldnames):
                         filas.append(row)
                     else:
@@ -114,14 +155,9 @@ class CSVManager:
             for fila in filas:
                 writer.writerow(fila)
 
-     # --- NUEVO: método para mostrar eventos (movido desde Tiquetera) ---
     @staticmethod
     def mostrar_eventos(eventos=None, filename="eventos.csv"):
-        """
-        Muestra eventos por consola.
-        - Si se pasa `eventos` (lista de Evento), los muestra.
-        - Si no se pasa, carga desde CSV y muestra lo cargado.
-        """
+        """Muestra eventos por consola."""
         if eventos is None:
             eventos = CSVManager.cargar_eventos(filename)
         if not eventos:
@@ -130,4 +166,3 @@ class CSVManager:
         print("\n--- EVENTOS DISPONIBLES ---")
         for i, e in enumerate(eventos, 1):
             print(f"{i}. {e}")
-    # --- FIN NUEVO ---

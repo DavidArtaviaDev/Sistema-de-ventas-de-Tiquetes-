@@ -2,63 +2,22 @@ from Ticket import Ticket
 from CSVManager import CSVManager
 from Config import Config
 from Operacion import Operacion
-from datetime import datetime #para mostrar la fecha y timpo actual 
+from datetime import datetime  # para mostrar la fecha y tiempo actual 
 
 class GestorTicket:
     def __init__(self):
         self.tickets = []
         self.pila_undo = []   # pila de operaciones
-        self.cargar_csv()
+        # ✅ ahora se cargan los tickets desde CSVManager
+        self.tickets = CSVManager.cargarTickets(Config.ARCHIVO_TICKETS)
 
-
-    
-    
-    def cargar_csv(self):
-        """Carga los tickets desde el archivo CSV"""
-        fieldnames = ["id_ticket", "id_evento", "id_cliente", "sector", "precio", "estado", "fecha_compra"]
-        filas = CSVManager.cargar_csv(Config.ARCHIVO_TICKETS, fieldnames)
-        
-        self.tickets = []
-        for fila in filas:
-            try:
-                ticket = Ticket(
-                    fila["id_ticket"],
-                    fila["id_evento"],
-                    fila["id_cliente"],
-                    fila["sector"],
-                    float(fila["precio"]),
-                    fila["estado"],
-                    fila["fecha_compra"]
-                )
-                self.tickets.append(ticket)
-            except (ValueError, KeyError) as e:
-                print(f"Error al cargar ticket: {e}")
-
-    def guardar_csv(self):
-        """Guarda los tickets en el archivo CSV"""
-        fieldnames = ["id_ticket", "id_evento", "id_cliente", "sector", "precio", "estado", "fecha_compra"]
-        filas = []
-        for ticket in self.tickets:
-            fila = {
-                "id_ticket": ticket.id_ticket,
-                "id_evento": ticket.id_evento,
-                "id_cliente": ticket.id_cliente,
-                "sector": ticket.sector,
-                "precio": str(ticket.precio),
-                "estado": ticket.estado,
-                "fecha_compra": ticket.fecha_compra
-            }
-            filas.append(fila)
-        
-        CSVManager.guardar_csv(Config.ARCHIVO_TICKETS, fieldnames, filas)
-   
-    # generar ID automático, no sé como funciona 
+    # generar ID automático
     def generar_id_ticket(self):
         if not self.tickets:
-            return "T0001"
+            return "T0000001"
         ultimo_id = max(int(t.id_ticket[1:]) for t in self.tickets if t.id_ticket.startswith("T"))
         nuevo_num = ultimo_id + 1
-        return f"T{nuevo_num:04d}"
+        return f"T{nuevo_num:07d}"   # siempre con 7 dígitos
 
     # CREATE
     def crear_ticket(self, ticket):
@@ -70,9 +29,9 @@ class GestorTicket:
             return False
 
         self.tickets.append(ticket)
-        self.guardar_csv()
+        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
 
-        #  Registrar en pila para Undo 
+        # Registrar en pila para Undo 
         self.pila_undo.append(Operacion("crear", ticket))
         return True
 
@@ -98,7 +57,7 @@ class GestorTicket:
         
         # Cancelar ticket
         ticket.cancelar_ticket()
-        self.guardar_csv()
+        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
 
         # Registrar operación en la pila Undo
         self.pila_undo.append(Operacion("actualizar", ticket, datos_extra=estado_anterior))
@@ -123,9 +82,9 @@ class GestorTicket:
                 if hasattr(ticket, key):
                     setattr(ticket, key, value)
 
-            self.guardar_csv()
+            CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
 
-            # --- Registrar en pila para Undo ---
+            # Registrar en pila para Undo
             self.pila_undo.append(Operacion("actualizar", ticket, datos_extra=estado_anterior))
             return True
         return False
@@ -135,9 +94,9 @@ class GestorTicket:
         ticket = self.obtener_ticket(id_ticket)
         if ticket:
             self.tickets.remove(ticket)
-            self.guardar_csv()
+            CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
 
-            # --- Registrar en pila para Undo ---
+            # Registrar en pila para Undo
             self.pila_undo.append(Operacion("eliminar", ticket))
             return True
         return False
@@ -167,16 +126,15 @@ class GestorTicket:
             print(f"Deshecha actualización del ticket {ultima_op.ticket.id_ticket}")
 
         # Guardar cambios en CSV después de revertir
-        self.guardar_csv()
+        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
         return True
-    
     
     #----------------------------------------------------------------------------------------------------------------
     
     def comprar_ticket(self, cliente, evento, sector):
         """Compra un ticket para un cliente autenticado en un sector específico"""
     
-    #   Normalizar del sector 
+        # Normalizar sector 
         sector = sector.strip().lower()
         if sector == "vip":
             sector = "VIP"
@@ -213,14 +171,11 @@ class GestorTicket:
 
         # Reducir cupo en el evento
         evento.capacidades[sector] -= 1
-         # Cargar todos los eventos existentes
+
+        # Cargar todos los eventos existentes
         eventos = CSVManager.cargar_eventos()
         
-        #self.guardar_eventos([evento])  # Guardar cambios en CSV de eventos
-        
-        
-        
-         # Reemplazar el evento comprado con el actualizado
+        # Reemplazar el evento comprado con el actualizado
         for i, ev in enumerate(eventos):
             if ev.id_evento == evento.id_evento:
                 eventos[i] = evento
@@ -233,16 +188,7 @@ class GestorTicket:
             "precio_grad","precio_gram","precio_vip"
         ]
         filas = [e.to_dict() for e in eventos]
-        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)
+        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)  # ✅
 
         print(f"✓ Ticket comprado con éxito: {nuevo_ticket}")
         return True
-
-    #def guardar_eventos(self, lista_eventos):
-      #  """Guarda eventos en eventos.csv después de modificar cupos"""
-       # filas = [e.to_dict() for e in lista_eventos]
-       # CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, [
-           # "id_evento","nombre","fecha_iso",
-           # "cap_grad","cap_gram","cap_vip",
-           # "precio_grad","precio_gram","precio_vip"
-       # ], filas)
