@@ -24,6 +24,14 @@ class Evento:
          self.id_evento = id_evento
          self.nombre = nombre
          self.fecha_iso = fecha_iso
+         self.cap_grad = int(cap_grad)
+         self.cap_gram = int(cap_gram)
+         self.cap_vip = int(cap_vip)
+         self.precio_grad = int(precio_grad)
+         self.precio_gram = int(precio_gram)
+         self.precio_vip = int(precio_vip)
+
+
          self.capacidades = { #agrupa capacidades en un diccionario
              "Graderia": int(cap_grad),
             "Gramilla": int(cap_gram),

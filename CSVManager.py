@@ -4,6 +4,9 @@ from Evento import Evento
 from Cliente import Cliente
 from Ticket import Ticket
 
+
+
+
 class CSVManager:
     # ===========================
     # MÉTODOS PARA TICKETS
@@ -109,6 +112,7 @@ class CSVManager:
             print(f"No se encontró {filename}")
         return clientes
 
+
     # ===========================
     # UTILIDADES GENERALES
     # ===========================
@@ -121,6 +125,8 @@ class CSVManager:
             numero = int(last_id[1:]) + 1
             return f"E{numero:03d}"
 
+    
+   
     @staticmethod
     def obtener_ultimo_id_cliente(filename="clientes.csv"):
         with open(filename, "r", encoding="utf-8") as file:
@@ -155,6 +161,7 @@ class CSVManager:
             for fila in filas:
                 writer.writerow(fila)
 
+
     @staticmethod
     def mostrar_eventos(eventos=None, filename="eventos.csv"):
         """Muestra eventos por consola."""
@@ -166,3 +173,26 @@ class CSVManager:
         print("\n--- EVENTOS DISPONIBLES ---")
         for i, e in enumerate(eventos, 1):
             print(f"{i}. {e}")
+
+
+    @staticmethod
+    def cargar_tickets(filename="tickets.csv"):
+        tickets = []
+        try:
+            with open(filename, "r", encoding="utf-8") as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    try:
+                        ticket = Ticket(
+                            row["id_ticket"], row["id_evento"], row["id_cliente"],
+                            row["sector"], float(row["precio"]), row["estado"],
+                            row["fecha_compra"]
+                        )
+                        tickets.append(ticket)
+                    except (ValueError, KeyError) as e:
+                        print(f"Error al procesar fila de ticket: {e}")
+        except FileNotFoundError:
+            print(f"Archivo de tickets no encontrado: {filename}")
+        
+        return tickets
+
