@@ -272,43 +272,47 @@ class Tiquetera:
         print("2 - Mergesort")
         print("3 - Volver al menú anterior")
         opcion = input("\nSeleccione una opción: ").strip()
-        
-        if opcion == "1":
-            print("No implementado aun")
-        
-        elif opcion == "2":
-            print("\nCriterios disponibles para ordenar:")
-            print("1 - id_evento")
-            print("2 - nombre")
-            print("3 - fecha_iso")
-            print("4 - cap_grad")
-            print("5 - cap_gram")
-            print("6 - cap_vip")
-            print("7 - precio_grad")
-            print("8 - precio_gram")
-            print("9 - precio_vip")
-            opcion_criterio = input("Seleccione un criterio: ").strip()
-            if opcion_criterio == "1":
+        print("\nCriterios disponibles para ordenar:")
+        print("1 - id_evento")
+        print("2 - nombre")
+        print("3 - fecha_iso")
+        print("4 - cap_grad")
+        print("5 - cap_gram")
+        print("6 - cap_vip")
+        print("7 - precio_grad")
+        print("8 - precio_gram")
+        print("9 - precio_vip")
+        opcion_criterio = input("Seleccione un criterio: ").strip()
+        if opcion_criterio == "1":
                 criterio = "id_evento"
-            elif opcion_criterio == "2":
+        elif opcion_criterio == "2":
                 criterio = "nombre"
-            elif opcion_criterio == "3":
+        elif opcion_criterio == "3":
                 criterio = "fecha_iso"
-            elif opcion_criterio == "4":
+        elif opcion_criterio == "4":
                 criterio = "cap_grad"
-            elif opcion_criterio == "5":
+        elif opcion_criterio == "5":
                 criterio = "cap_gram"
-            elif opcion_criterio == "6":
+        elif opcion_criterio == "6":
                 criterio = "cap_vip"
-            elif opcion_criterio == "7":
+        elif opcion_criterio == "7":
                 criterio = "precio_grad"
-            elif opcion_criterio == "8":
+        elif opcion_criterio == "8":
                 criterio = "precio_gram"
-            elif opcion_criterio == "9":
+        elif opcion_criterio == "9":
                 criterio = "precio_vip"
-            else:
+        else:
                 print("Criterio no válido. Usando 'id_evento' por defecto.")
                 criterio = "id_evento"
+        
+        if opcion == "1":
+            eventos_ordenados = self.quick_sort_eventos(criterio)
+            print("\n--- Eventos Ordenados (Quicksort) ---")
+            for evento in eventos_ordenados:
+                print(evento)
+        
+        elif opcion == "2":
+         
 
             eventos_ordenados = self.mergeSortRecursivo(self.eventos, criterio)
             print("\n--- Eventos Ordenados (Mergesort) ---")
@@ -356,3 +360,56 @@ class Tiquetera:
         resultado.extend(derecha[j:])
         return resultado
 
+    def quick_sort_eventos(self, criterio: str) -> list:
+        """
+        Ordena una copia de la lista de eventos usando QuickSort.
+        Este es el método público que se debe llamar.
+        """
+        # 1. Creamos una copia para no modificar self.eventos
+        lista_a_ordenar = list(self.eventos)
+        
+        # 2. Llamamos al método recursivo para que ordene la copia
+        self._quick_sort_recursivo(lista_a_ordenar, 0, len(lista_a_ordenar) - 1, criterio)
+        
+        # 3. Devolvemos la copia ya ordenada
+        return lista_a_ordenar
+
+    def _quick_sort_recursivo(self, lista: list, bajo: int, alto: int, criterio: str):
+        """
+        Método auxiliar recursivo que implementa la lógica de "Divide y Vencerás".
+        'bajo' y 'alto' son los índices que definen la sublista actual.
+        """
+        if bajo < alto:
+            # Encuentra el índice del pivote, que ya estará en su lugar correcto
+            pivote_idx = self._partition(lista, bajo, alto, criterio)
+
+            # Llama recursivamente al método para las dos sublistas
+            # (elementos antes del pivote y elementos después del pivote)
+            self._quick_sort_recursivo(lista, bajo, pivote_idx - 1, criterio)
+            self._quick_sort_recursivo(lista, pivote_idx + 1, alto, criterio)
+
+    def _partition(self, lista: list, bajo: int, alto: int, criterio: str) -> int:
+        """
+        Toma el último elemento como pivote, lo coloca en su posición ordenada
+        y pone todos los elementos más pequeños a su izquierda y los más grandes a su derecha.
+        """
+        # 1. Elegimos el último elemento de la sublista como nuestro pivote
+        pivote = getattr(lista[alto], criterio)
+        
+        # 'i' es el índice del último elemento que era más pequeño que el pivote
+        i = bajo - 1
+
+        # 2. Recorremos la sublista desde el inicio ('bajo') hasta justo antes del pivote
+        for j in range(bajo, alto):
+            # Si el elemento actual es menor o igual que el pivote...
+            if getattr(lista[j], criterio) <= pivote:
+                # ...incrementamos 'i' y lo intercambiamos con el elemento en la posición 'j'
+                i += 1
+                lista[i], lista[j] = lista[j], lista[i]
+
+        # 3. Al final del bucle, todos los elementos hasta 'i' son menores que el pivote.
+        # Ahora, colocamos el pivote en su lugar correcto (justo después del último elemento menor)
+        lista[i + 1], lista[alto] = lista[alto], lista[i + 1]
+        
+        # 4. Devolvemos el índice donde quedó el pivote
+        return i + 1
