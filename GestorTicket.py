@@ -126,15 +126,35 @@ class GestorTicket:
             print(f"Deshecha actualización del ticket {ultima_op.ticket.id_ticket}")
 
         # Guardar cambios en CSV después de revertir
-        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
+        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # 
         return True
     
     #----------------------------------------------------------------------------------------------------------------
     
-    def comprar_ticket(self, cliente, evento, sector):
-        """Compra un ticket para un cliente autenticado en un sector específico"""
-    
-        # Normalizar sector 
+    def comprar_ticket(self, cliente, eventos):
+        """Compra un ticket para un cliente autenticado."""
+        if not eventos:
+            print("No hay eventos disponibles.")
+            return False
+
+        # Mostrar eventos
+        CSVManager.mostrar_eventos(eventos)
+        try:
+            idx_evento = int(input("Número del evento que desea comprar: ")) - 1
+            evento_seleccionado = eventos[idx_evento]
+        except (ValueError, IndexError):
+            print("Selección inválida.")
+            return False
+
+        # Mostrar sectores disponibles
+        print("\nSectores disponibles:")
+        for sector, cupo in evento_seleccionado.capacidades.items():
+            print(f"- {sector}: {cupo} entradas")
+
+        # Seleccionar sector
+        sector = input("Seleccione sector: ").capitalize()
+
+        # Normalizar sector
         sector = sector.strip().lower()
         if sector == "vip":
             sector = "VIP"
@@ -142,53 +162,51 @@ class GestorTicket:
             sector = "Graderia"
         elif sector == "gramilla":
             sector = "Gramilla"
-        
-        # Validar sector
+
+        # Validar sector y disponibilidad
         if sector not in Config.SECTORES:
             print(f"Error: sector inválido. Debe ser uno de {Config.SECTORES}")
             return False
 
-        # Verificar disponibilidad
-        disponibles = evento.capacidades.get(sector, 0)
-        if disponibles <= 0:
-            print(f"No hay cupos disponibles en {sector} para el evento {evento.nombre}.")
+        if evento_seleccionado.capacidades.get(sector, 0) <= 0:
+            print(f"No hay cupos disponibles en {sector} para el evento {evento_seleccionado.nombre}.")
             return False
 
-        # Mostrar disponibilidad
-        print(f"Disponibilidad en {sector}: {disponibles} entradas.")
-
-        # Crear ticket
+        # Crear ticket y actualizar evento
         nuevo_ticket = Ticket(
-            id_ticket="",  # se genera automático
-            id_evento=evento.id_evento,
+            id_ticket="",
+            id_evento=evento_seleccionado.id_evento,
             id_cliente=cliente.id_cliente,
             sector=sector,
-            precio=evento.precios[sector],
+            precio=evento_seleccionado.precios[sector],
             estado="emitido",
             fecha_compra=datetime.now().strftime("%Y-%m-%d")
         )
         self.crear_ticket(nuevo_ticket)
+        evento_seleccionado.capacidades[sector] -= 1
 
-        # Reducir cupo en el evento
-        evento.capacidades[sector] -= 1
-
-        # Cargar todos los eventos existentes
-        eventos = CSVManager.cargar_eventos()
-        
-        # Reemplazar el evento comprado con el actualizado
-        for i, ev in enumerate(eventos):
-            if ev.id_evento == evento.id_evento:
-                eventos[i] = evento
-                break
-
-        # Guardar de nuevo todos los eventos
+        # Guardar eventos actualizados en CSV
         fieldnames = [
             "id_evento","nombre","fecha_iso",
             "cap_grad","cap_gram","cap_vip",
             "precio_grad","precio_gram","precio_vip"
         ]
         filas = [e.to_dict() for e in eventos]
-        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)  # ✅
+        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)
 
-        print(f"✓ Ticket comprado con éxito: {nuevo_ticket}")
+        print(f"Ticket comprado con exito: {nuevo_ticket}")
         return True
+
+
+
+
+    def ver_tickets_cliente(self, cliente):
+        """Muestra todos los tickets asociados a un cliente"""
+        print("\n--- MIS TICKETS ---")
+        encontrados = False
+        for t in self.tickets:
+            if t.id_cliente == cliente.id_cliente:
+                print(t)
+                encontrados = True
+        if not encontrados:
+            print("No tienes entradas registradas.")

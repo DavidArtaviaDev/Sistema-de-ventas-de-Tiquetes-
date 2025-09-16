@@ -21,6 +21,9 @@ class Tiquetera:
         self.cliente_actual = None  # Cliente autenticado actualmente el que esta utilizando la aplicacion en momento
         self.auth = None    # Objeto Auth para manejar autenticaciones se carga en la funcion cargarDatos
         self.eventos = []   # Lista de eventos cargados
+        
+        # Inicializamos gestor de tickets
+        self.gestor_tickets = GestorTicket()
 
 
 
@@ -342,10 +345,11 @@ class Tiquetera:
             self.menuOrdenarEventos()
 
         elif opcion == "3":
-            print("No implementado aun")
+            self.gestor_tickets.comprar_ticket(self.cliente_actual, self.eventos)
+        
 
         elif opcion == "4":
-            print("No implementado aun")
+            self.gestor_tickets.ver_tickets_cliente(self.cliente_actual)
            
         elif opcion == "5":
            
