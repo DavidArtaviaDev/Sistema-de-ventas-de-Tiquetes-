@@ -1,5 +1,6 @@
 # Es recomendable importar las clases que se usarán para type hinting (opcional pero buena práctica)
 from typing import List, Optional
+from SolicitudCompra import SolicitudCompra
 from Auth import Auth
 from CSVManager import CSVManager
 from Cliente import Cliente
@@ -21,9 +22,13 @@ class Tiquetera:
         self.cliente_actual = None  # Cliente autenticado actualmente el que esta utilizando la aplicacion en momento
         self.auth = None    # Objeto Auth para manejar autenticaciones se carga en la funcion cargarDatos
         self.eventos = []   # Lista de eventos cargados
+        self.solicitudes = []
         
         # Inicializamos gestor de tickets
         self.gestor_tickets = GestorTicket()
+        
+        
+
 
 
 
@@ -147,7 +152,8 @@ class Tiquetera:
         print("1 - Ver todos los clientes")
         print("2 - Buscar cliente por ID y sus tiquetes")
         print("3 - Agregar evento")
-        print("4 - Cerrar sesión")
+        print("4 - Aceptar solicitudes de compra en orden prioridad")
+        print("5 - Cerrar sesión")
         opcion = input("\nSeleccione una opción: ").strip()
         if opcion == "1":
          print("\n--- Lista de Clientes ---")
@@ -160,96 +166,68 @@ class Tiquetera:
               self.crearEventoNuevo()  
               
         elif opcion == "4":
+            if not self.solicitudes:
+                print("No hay solicitudes pendientes.")
+                return
+
+            print("\nProcesando solicitudes en orden de prioridad:")
+            while self.solicitudes:
+                solicitud = self.solicitudes.pop(0)  #  si usas lista ordenada
+                print(solicitud)
+
+                aceptar = input("¿Aceptar esta solicitud? (si/no): ").strip().lower()
+                if aceptar == "si":
+                    tickets = solicitud.obtener_tickets()
+                    evento = solicitud.evento
+                    sector = solicitud.sector
+                    cantidad = solicitud.cantidad
+                    
+                    
+                    # Revisar disponibilidad antes de confirmar
+                    if evento.capacidades.get(sector, 0) >= cantidad:
+                        # Descontar cupos
+                        evento.capacidades[sector] -= cantidad
+                    
+                        for t in tickets:
+                            t.estado = "emitido"
+                            self.gestor_tickets.crear_ticket(t)  #ahora sí se guarda en CSV
+                            
+                        # Guardar cambios de eventos en CSV
+                        fieldnames = [
+                            "id_evento", "nombre", "fecha_iso",
+                            "cap_grad", "cap_gram", "cap_vip",
+                            "precio_grad", "precio_gram", "precio_vip"
+                        ]
+                        filas = [e.to_dict() for e in self.eventos]
+                        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)
+                        
+                        print(f" {len(tickets)} ticket(s) confirmados y guardados en CSV.")
+                        
+                        
+                        # Revisar si el sector se quedó sin entradas
+                        if evento.capacidades[sector] == 0:
+                            print(f" Entradas agotadas en {sector} para el evento {evento.nombre}.")
+            
+                    else:
+                        # No hay suficientes entradas -> cancelar tickets
+                        for t in tickets:
+                            t.estado = "agotado"
+                        print(f" No hay suficientes entradas disponibles en {sector}. Solicitud cancelada.")
+        
+            else:
+                print(" Solicitud rechazada. Tickets eliminados.")
+                   
+            
+          
+        elif opcion == "5":
            # self.cliente_actual = None
             print("\nSesión de admin cerrada.")
+            
         else:
             print("\nOpción no válida. Por favor, intente de nuevo.")
 
 
     
-    """"
-    def cargar_eventos(self):
-        "Carga eventos desde CSV en memoria"
-        filas = CSVManager.cargar_csv(Config.ARCHIVO_EVENTOS, [
-            "id_evento","nombre","fecha_iso",
-            "cap_grad","cap_gram","cap_vip",
-            "precio_grad","precio_gram","precio_vip"
-        ])
-        self.eventos = [] #lista vacia para almacenar los elementos de evemto que se vana crear 
-        for fila in filas: #para ir fila por fila del csv 
-            try:
-                evento = Evento( #objeto 
-                    fila["id_evento"], fila["nombre"], fila["fecha_iso"],
-                    int(fila["cap_grad"]), int(fila["cap_gram"]), int(fila["cap_vip"]),
-                    int(fila["precio_grad"]), int(fila["precio_gram"]), int(fila["precio_vip"])
-                )
-                self.eventos.append(evento) # se guarda el onjeto en la lista self.eventos, para luego mostralo 
-            except Exception as e:
-                print(f"Error cargando evento: {e}")
-"""
-    """def mostrar_eventos(self):
-        #Lista todos los eventos disponibles
-        if not self.eventos: #aqui se compruba si la lista esta vacia o no 
-            print("No hay eventos disponibles.")
-            return
-        print("\n--- EVENTOS DISPONIBLES ---")
-        for i, e in enumerate(self.eventos, 1): #recorre la lista 
-            print(f"{i}. {e}") #devuleve el  indice i y el onjeto e que trae el string con toda la info de eventos 
-"""
-    """def mostrarMenuCliente(self)
-        Menú interactivo del cliente autenticado
-        if self.cliente_actual is None:
-            print("Debe iniciar sesión primero.")
-            return
-
-        gestor_tickets = GestorTicket()
-
-        while True:
-            print("\n--- MENÚ CLIENTE ---")
-            print("1 - Ver mis entradas")
-            print("2 - Comprar entradas")
-            print("3 - Cerrar sesión")
-            opcion = input("Seleccione una opción: ").strip()
-
-            if opcion == "1":
-                print("\n--- MIS TICKETS ---")
-                encontrados = False
-                for t in gestor_tickets.tickets:
-                    if t.id_cliente == self.cliente_actual.id_cliente:
-                        print(t)
-                        encontrados = True
-                if not encontrados:
-                    print("No tienes entradas registradas.")
-
-            elif opcion == "2":
-             
-                CSVManager.mostrar_eventos(self.eventos)
-                if not self.eventos:
-                    continue
-
-                try:
-                    idx_evento = int(input("Número del evento: ")) - 1
-                    evento_seleccionado = self.eventos[idx_evento]
-                except (ValueError, IndexError):
-                    print("Selección inválida.")
-                    continue
-
-                print("\nSectores disponibles:")
-                for sector, cupo in evento_seleccionado.capacidades.items():
-                    print(f"- {sector}: {cupo} entradas")
-
-                sector = input("Seleccione sector: ").capitalize()
-                gestor_tickets.comprar_ticket(self.cliente_actual, evento_seleccionado, sector)
-
-            elif opcion == "3":
-                print("Cerrando sesión...")
-                self.cliente_actual = None
-                break
-
-            else:
-                print("Opción inválida, intente de nuevo.")
-        
-"""
    
 
     def verTodosLosClientes(self):
@@ -345,7 +323,7 @@ class Tiquetera:
             self.menuOrdenarEventos()
 
         elif opcion == "3":
-            self.gestor_tickets.comprar_ticket(self.cliente_actual, self.eventos)
+            self.gestor_tickets.comprar_ticket(self.cliente_actual, self.eventos, self.solicitudes)
         
 
         elif opcion == "4":

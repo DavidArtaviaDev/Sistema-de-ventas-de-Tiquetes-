@@ -1,4 +1,5 @@
 from Ticket import Ticket
+from SolicitudCompra import SolicitudCompra
 from CSVManager import CSVManager
 from Config import Config
 from Operacion import Operacion
@@ -29,7 +30,7 @@ class GestorTicket:
             return False
 
         self.tickets.append(ticket)
-        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
+        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  
 
         # Registrar en pila para Undo 
         self.pila_undo.append(Operacion("crear", ticket))
@@ -57,7 +58,7 @@ class GestorTicket:
         
         # Cancelar ticket
         ticket.cancelar_ticket()
-        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
+        CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  
 
         # Registrar operación en la pila Undo
         self.pila_undo.append(Operacion("actualizar", ticket, datos_extra=estado_anterior))
@@ -82,7 +83,7 @@ class GestorTicket:
                 if hasattr(ticket, key):
                     setattr(ticket, key, value)
 
-            CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
+            CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  
 
             # Registrar en pila para Undo
             self.pila_undo.append(Operacion("actualizar", ticket, datos_extra=estado_anterior))
@@ -94,7 +95,7 @@ class GestorTicket:
         ticket = self.obtener_ticket(id_ticket)
         if ticket:
             self.tickets.remove(ticket)
-            CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  # ✅
+            CSVManager.guardarTickets(self.tickets, Config.ARCHIVO_TICKETS)  
 
             # Registrar en pila para Undo
             self.pila_undo.append(Operacion("eliminar", ticket))
@@ -131,7 +132,7 @@ class GestorTicket:
     
     #----------------------------------------------------------------------------------------------------------------
     
-    def comprar_ticket(self, cliente, eventos):
+    def comprar_ticket(self, cliente, eventos, solicitudes_globales=None):
         """Compra un ticket para un cliente autenticado."""
         if not eventos:
             print("No hay eventos disponibles.")
@@ -153,8 +154,10 @@ class GestorTicket:
 
         # Seleccionar sector
         sector = input("Seleccione sector: ").capitalize()
+        cantidad = int(input("Cantidad de tickets que desea comprar: "))
+        
 
-        # Normalizar sector
+        # Normalizar sector 
         sector = sector.strip().lower()
         if sector == "vip":
             sector = "VIP"
@@ -167,34 +170,41 @@ class GestorTicket:
         if sector not in Config.SECTORES:
             print(f"Error: sector inválido. Debe ser uno de {Config.SECTORES}")
             return False
-
-        if evento_seleccionado.capacidades.get(sector, 0) <= 0:
-            print(f"No hay cupos disponibles en {sector} para el evento {evento_seleccionado.nombre}.")
+        
+        
+        if evento_seleccionado.capacidades.get(sector, 0) < cantidad:
+            print(f"No hay suficientes cupos en {sector}. Quedan {evento_seleccionado.capacidades.get(sector, 0)} entradas.")
             return False
 
+
+
+         # Crear solicitud de compra
+        solicitud = SolicitudCompra(cliente, evento_seleccionado, sector, cantidad)
+         
+        
+        
+
+
         # Crear ticket y actualizar evento
-        nuevo_ticket = Ticket(
-            id_ticket="",
-            id_evento=evento_seleccionado.id_evento,
-            id_cliente=cliente.id_cliente,
-            sector=sector,
-            precio=evento_seleccionado.precios[sector],
-            estado="emitido",
-            fecha_compra=datetime.now().strftime("%Y-%m-%d")
-        )
-        self.crear_ticket(nuevo_ticket)
-        evento_seleccionado.capacidades[sector] -= 1
-
-        # Guardar eventos actualizados en CSV
-        fieldnames = [
-            "id_evento","nombre","fecha_iso",
-            "cap_grad","cap_gram","cap_vip",
-            "precio_grad","precio_gram","precio_vip"
-        ]
-        filas = [e.to_dict() for e in eventos]
-        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)
-
-        print(f"Ticket comprado con exito: {nuevo_ticket}")
+        for _ in range(cantidad):
+            nuevo_ticket = Ticket(
+                id_ticket="",
+                id_evento=evento_seleccionado.id_evento,
+                id_cliente=cliente.id_cliente,
+                sector=sector,
+                precio=evento_seleccionado.precios[sector],
+                estado="pendiente", #todavia no acpetado por el admin 
+                fecha_compra=datetime.now().strftime("%Y-%m-%d")
+            )
+            solicitud.agregar_ticket(nuevo_ticket)
+            
+        print(f"Solicitud generada con {cantidad} ticket(s) en {sector}. Esperando aprobación del admin.")
+        
+        
+        # Agregar solicitud a la lista global
+        if solicitudes_globales is not None:
+            solicitudes_globales.append(solicitud)
+        
         return True
 
 

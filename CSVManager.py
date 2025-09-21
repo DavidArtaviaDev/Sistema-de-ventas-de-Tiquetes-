@@ -9,7 +9,7 @@ from Ticket import Ticket
 
 class CSVManager:
     # ===========================
-    # MÉTODOS PARA TICKETS
+    # METODOS PARA TICKETS
     # ===========================
     @staticmethod
     def cargarTickets(filename="tickets.csv"):
@@ -51,7 +51,7 @@ class CSVManager:
         CSVManager.guardar_csv(filename, fieldnames, filas)
 
     # ===========================
-    # MÉTODOS PARA EVENTOS
+    # METODOS PARA EVENTOS
     # ===========================
     @staticmethod
     def guardar_eventos(evento, filename="eventos.csv"):
@@ -85,7 +85,7 @@ class CSVManager:
         return eventos
 
     # ===========================
-    # MÉTODOS PARA CLIENTES
+    # METODOS PARA CLIENTES
     # ===========================
     @staticmethod
     def guardar_clientes(cliente, filename="clientes.csv"):

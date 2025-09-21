@@ -1,6 +1,6 @@
 class Config: #funciona como contenedor de configuraciones globales
     SECTORES = ["Graderia","Gramilla","VIP"]
-    ESTADOS_TICKET = ["emitido"]
+    ESTADOS_TICKET = ["emitido","pendiente","agotado"]
     
     
     #atributos de clase que almacena el nombre del archivo CSV donde se guardan los eventos, tickets y clientes 
