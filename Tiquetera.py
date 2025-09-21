@@ -149,86 +149,90 @@ class Tiquetera:
         print(f" Se cargaron {len(self.eventos)} eventos.")
 
     def menuAdmin(self):
-        print("\n--- Menú Admin ---")
-        print("1 - Ver todos los clientes")
-        print("2 - Buscar cliente por ID y sus tiquetes")
-        print("3 - Agregar evento")
-        print("4 - Recibir tickets por sector")
-        print("5 - Aceptar solicitudes de compra en orden prioridad")
-        print("6 - Cerrar sesión")
-        opcion = input("\nSeleccione una opción: ").strip()
-        if opcion == "1":
-         print("\n--- Lista de Clientes ---")
-         self.verTodosLosClientes()
+        while True:
+            print("\n--- Menú Admin ---")
+            print("1 - Ver todos los clientes")
+            print("2 - Buscar cliente por ID y sus tiquetes")
+            print("3 - Agregar evento")
+            print("4 - Recibir tickets por sector")
+            print("5 - Aceptar solicitudes de compra en orden prioridad")
+            print("6 - Cerrar sesión")
+            opcion = input("\nSeleccione una opción: ").strip()
+            if opcion == "1":
+                print("\n--- Lista de Clientes ---")
+                self.verTodosLosClientes()
+            
+            elif opcion == "2":
+                self.buscarClientePorIDYtiques()
         
-        elif opcion == "2":
-           self.buscarClientePorIDYtiques()
-      
-        elif opcion == "3":
-              self.crearEventoNuevo() 
-              
-        elif opcion == "4":
-            self.recibirTicketsPorSector()
-              
-        elif opcion == "5":
-            if not self.solicitudes:
-                print("No hay solicitudes pendientes.")
-                return
+            elif opcion == "3":
+                self.crearEventoNuevo() 
+                
+            elif opcion == "4":
+                self.recibirTicketsPorSector()
+                
+            elif opcion == "5":
+                if not self.solicitudes:
+                    print("No hay solicitudes pendientes.")
+                    return
+                
 
-            print("\nProcesando solicitudes en orden de prioridad:")
-            while self.solicitudes:
-                solicitud = self.solicitudes.pop(0)  #  si usas lista ordenada
-                print(solicitud)
+                print("\nProcesando solicitudes en orden de prioridad:")
+                while self.solicitudes:
+                    solicitud = self.solicitudes.pop(0)  #  si usas lista ordenada
+                    print(solicitud)
 
-                aceptar = input("¿Aceptar esta solicitud? (si/no): ").strip().lower()
-                if aceptar == "si":
-                    tickets = solicitud.obtener_tickets()
-                    evento = solicitud.evento
-                    sector = solicitud.sector
-                    cantidad = solicitud.cantidad
-                    
-                    
-                    # Revisar disponibilidad antes de confirmar
-                    if evento.capacidades.get(sector, 0) >= cantidad:
-                        # Descontar cupos
-                        evento.capacidades[sector] -= cantidad
-                    
-                        for t in tickets:
-                            t.estado = "emitido"
-                            self.gestor_tickets.crear_ticket(t)  #ahora sí se guarda en CSV
+                    aceptar = input("¿Aceptar esta solicitud? (si/no): ").strip().lower()
+                    if aceptar == "si":
+                        tickets = solicitud.obtener_tickets()
+                        evento = solicitud.evento
+                        sector = solicitud.sector
+                        cantidad = solicitud.cantidad
+                        
+                        
+                        # Revisar disponibilidad antes de confirmar
+                        if evento.capacidades.get(sector, 0) >= cantidad:
+                            # Descontar cupos
+                            evento.capacidades[sector] -= cantidad
+                        
+                            for t in tickets:
+                                t.estado = "emitido"
+                                self.gestor_tickets.crear_ticket(t)  #ahora sí se guarda en CSV
+                                
+                            # Guardar cambios de eventos en CSV
+                            fieldnames = [
+                                "id_evento", "nombre", "fecha_iso",
+                                "cap_grad", "cap_gram", "cap_vip",
+                                "precio_grad", "precio_gram", "precio_vip"
+                            ]
+                            filas = [e.to_dict() for e in self.eventos]
+                            CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)
                             
-                        # Guardar cambios de eventos en CSV
-                        fieldnames = [
-                            "id_evento", "nombre", "fecha_iso",
-                            "cap_grad", "cap_gram", "cap_vip",
-                            "precio_grad", "precio_gram", "precio_vip"
-                        ]
-                        filas = [e.to_dict() for e in self.eventos]
-                        CSVManager.guardar_csv(Config.ARCHIVO_EVENTOS, fieldnames, filas)
-                        
-                        print(f" {len(tickets)} ticket(s) confirmados y guardados en CSV.")
-                        
-                        
-                        # Revisar si el sector se quedó sin entradas
-                        if evento.capacidades[sector] == 0:
-                            print(f" Entradas agotadas en {sector} para el evento {evento.nombre}.")
-            
+                            print(f" {len(tickets)} ticket(s) confirmados y guardados en CSV.")
+                            
+                            
+                            # Revisar si el sector se quedó sin entradas
+                            if evento.capacidades[sector] == 0:
+                                print(f" Entradas agotadas en {sector} para el evento {evento.nombre}.")
+                
+                        else:
+                            # No hay suficientes entradas -> cancelar tickets
+                            for t in tickets:
+                                t.estado = "agotado"
+                            print(f" No hay suficientes entradas disponibles en {sector}. Solicitud cancelada.")
                     else:
-                        # No hay suficientes entradas -> cancelar tickets
-                        for t in tickets:
-                            t.estado = "agotado"
-                        print(f" No hay suficientes entradas disponibles en {sector}. Solicitud cancelada.")
-                else:
-                  print(" Solicitud rechazada. Tickets eliminados.")
-                   
+                
+                        print(" Solicitud rechazada. Tickets eliminados.")
+                    
+                
             
-          
-        elif opcion == "6":
-           # self.cliente_actual = None
-            print("\nSesión de admin cerrada.")
-            
-        else:
-            print("\nOpción no válida. Por favor, intente de nuevo.")
+            elif opcion == "6":
+            # self.cliente_actual = None
+                print("\nSesión de admin cerrada.")
+                break 
+                
+            else:
+                print("\nOpción no válida. Por favor, intente de nuevo.")
 
 
     
@@ -313,68 +317,75 @@ class Tiquetera:
 
 
     def menuCliente(self):
-        print("\n--- Menú Cliente ---")
-        print("1 - Ver todos los eventos")
-        print("2 - Ordenar eventos por criterio")
-        print("3 - Comprar tiquete")
-        print("4 - Ver mis tiquetes")
-        print("5 - Llegar al evento")  
-        print("6 - Cerrar sesión")
-        opcion = input("\nSeleccione una opción: ").strip()
-        if opcion == "1":
-            self.verTodosLosEventos()
-        elif opcion == "2":
-        
-            self.menuOrdenarEventos()
+        while True:
+            print("\n--- Menú Cliente ---")
+            print("1 - Ver todos los eventos")
+            print("2 - Ordenar eventos por criterio")
+            print("3 - Comprar tiquete")
+            print("4 - Ver mis tiquetes")
+            print("5 - Llegar al evento")  
+            print("6 - Deshacer  compra") 
+            print("7 - Cerrar sesión")
+            opcion = input("\nSeleccione una opción: ").strip()
+            if opcion == "1":
+                self.verTodosLosEventos()
+            elif opcion == "2":
+            
+                self.menuOrdenarEventos()
 
-        elif opcion == "3":
-            self.gestor_tickets.comprar_ticket(self.cliente_actual, self.eventos, self.solicitudes)
-        
+            elif opcion == "3":
+                self.gestor_tickets.comprar_ticket(self.cliente_actual, self.eventos, self.solicitudes)
+            
 
-        elif opcion == "4":
-            self.gestor_tickets.ver_tickets_cliente(self.cliente_actual)
-            print("\nTus tiquetes en la cola (pendientes):")
-            self.gestor_tickets.ver_tickets_en_cola(self.cliente_actual, self.solicitudes)
+            elif opcion == "4":
+                self.gestor_tickets.ver_tickets_cliente(self.cliente_actual)
+                print("\nTus tiquetes en la cola (pendientes):")
+                self.gestor_tickets.ver_tickets_en_cola(self.cliente_actual, self.solicitudes)
 
-        elif opcion == "5":  # NUEVA OPCIÓN
-           
-            id_evento = input("Ingrese el código del evento al que llega: ").strip()
+            elif opcion == "5":  # NUEVA OPCIÓN
+            
+                id_evento = input("Ingrese el código del evento al que llega: ").strip()
 
-            # Leer todos los tickets desde el CSV
-            tickets = CSVManager.cargar_tickets(Config.ARCHIVO_TICKETS)
+                # Leer todos los tickets desde el CSV
+                tickets = CSVManager.cargar_tickets(Config.ARCHIVO_TICKETS)
 
-            # Filtrar solo los tickets de este cliente y evento
-            tickets_cliente = [
-                t for t in tickets
-                if t.id_cliente == self.cliente_actual.id_cliente and t.id_evento == id_evento
-            ]
+                # Filtrar solo los tickets de este cliente y evento
+                tickets_cliente = [
+                    t for t in tickets
+                    if t.id_cliente == self.cliente_actual.id_cliente and t.id_evento == id_evento
+                ]
 
-            if tickets_cliente:
-                print("\nTickets del cliente en el evento:")
-                for t in tickets_cliente:
-                    print(f"  - {t}")
+                if tickets_cliente:
+                    print("\nTickets del cliente en el evento:")
+                    for t in tickets_cliente:
+                        print(f"  - {t}")
 
-                # Guardamos en la cola global para que el admin los procese
-                if not hasattr(self, "cola_prioridad_actual"):
-                    self.cola_prioridad_actual = []
+                    # Guardamos en la cola global para que el admin los procese
+                    if not hasattr(self, "cola_prioridad_actual"):
+                        self.cola_prioridad_actual = []
 
-                self.cola_prioridad_actual.extend(tickets_cliente)
+                    self.cola_prioridad_actual.extend(tickets_cliente)
 
-                # Ordenar la cola por prioridad
-                prioridad = {"VIP": 0, "Gramilla": 1, "Graderia": 2}
-                self.cola_prioridad_actual.sort(key=lambda t: prioridad.get(t.sector, 99))
+                    # Ordenar la cola por prioridad
+                    prioridad = {"VIP": 0, "Gramilla": 1, "Graderia": 2}
+                    self.cola_prioridad_actual.sort(key=lambda t: prioridad.get(t.sector, 99))
 
-                print("\nTickets añadidos a la cola de prioridad para este evento.")
+                    print("\nTickets añadidos a la cola de prioridad para este evento.")
+                else:
+                    print("No tienes tickets registrados para este evento.")
+                    
+            elif opcion == "6":
+                self.deshacer_compra()
+                
+            elif opcion == "7":
+            
+                print("\nSesión cerrada.")
+                self.cliente_actual = None
+                #self.mostraMenuPrincipal()
+                break
+
             else:
-                print("No tienes tickets registrados para este evento.")
-        elif opcion == "6":
-           
-            print("\nSesión cerrada.")
-            self.cliente_actual = None
-            self.mostraMenuPrincipal()
-
-        else:
-            print("\nOpción no válida. Por favor, intente de nuevo.")
+                print("\nOpción no válida. Por favor, intente de nuevo.")
 
     def verTodosLosEventos(self):
         print("\n--- Lista de Eventos ---")
@@ -594,5 +605,35 @@ class Tiquetera:
         self.cola_prioridad_actual = tickets_evento
         print(f"\nSe generó la cola de prioridad para el evento {id_evento}.")
         return tickets_evento
+    
+    
+    def deshacer_compra(self):
+        # Verificamos que haya un cliente autenticado
+        if not self.cliente_actual:
+            print("Debe iniciar sesión como cliente para usar esta opción.")
+            return
+
+        # Filtramos las solicitudes de este cliente
+        solicitudes_cliente = [s for s in self.solicitudes if s.cliente.id_cliente == self.cliente_actual.id_cliente]
+
+        if not solicitudes_cliente:
+            print("No tienes solicitudes pendientes para deshacer.")
+            return
+
+        print("\n--- Solicitudes pendientes ---")
+        for i, s in enumerate(solicitudes_cliente, start=1):
+            print(f"{i}. {s}")
+
+        try:
+            idx = int(input("Seleccione el número de la solicitud que desea deshacer: ")) - 1
+            if 0 <= idx < len(solicitudes_cliente):
+                solicitud_a_eliminar = solicitudes_cliente[idx]
+                self.solicitudes.remove(solicitud_a_eliminar)
+                print("La compra fue deshecha y eliminada de la cola de prioridad.")
+            else:
+                print("Selección inválida.")
+        except ValueError:
+            print("Entrada inválida.")
+
 
 
