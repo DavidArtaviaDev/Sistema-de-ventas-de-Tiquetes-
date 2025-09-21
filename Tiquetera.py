@@ -152,8 +152,9 @@ class Tiquetera:
         print("1 - Ver todos los clientes")
         print("2 - Buscar cliente por ID y sus tiquetes")
         print("3 - Agregar evento")
-        print("4 - Aceptar solicitudes de compra en orden prioridad")
-        print("5 - Cerrar sesión")
+        print("4 - Recibir tickets por sector")
+        print("5 - Aceptar solicitudes de compra en orden prioridad")
+        print("6 - Cerrar sesión")
         opcion = input("\nSeleccione una opción: ").strip()
         if opcion == "1":
          print("\n--- Lista de Clientes ---")
@@ -163,9 +164,12 @@ class Tiquetera:
            self.buscarClientePorIDYtiques()
       
         elif opcion == "3":
-              self.crearEventoNuevo()  
+              self.crearEventoNuevo() 
               
         elif opcion == "4":
+            self.recibirTicketsPorSector()
+              
+        elif opcion == "5":
             if not self.solicitudes:
                 print("No hay solicitudes pendientes.")
                 return
@@ -218,7 +222,7 @@ class Tiquetera:
                    
             
           
-        elif opcion == "5":
+        elif opcion == "6":
            # self.cliente_actual = None
             print("\nSesión de admin cerrada.")
             
@@ -498,4 +502,39 @@ class Tiquetera:
         
         # 4. Devolvemos el índice donde quedó el pivote
         return i + 1
+    
+    
+    
+    def recibirTicketsPorSector(self):
+        # Cargar tickets directamente del CSV
+        tickets = CSVManager.cargar_tickets(Config.ARCHIVO_TICKETS)
+
+        if not tickets:
+            print("No hay tickets registrados en el sistema.")
+            return
+
+        # Paso 1: pedir evento
+        id_evento = input("Ingrese el código del evento: ").strip()
+
+        # Filtrar tickets del evento
+        tickets_evento = [t for t in tickets if t.id_evento == id_evento]
+
+        if not tickets_evento:
+            print("No hay tickets emitidos para este evento.")
+            return
+
+        # Paso 2: ordenar todos los tickets del evento por sector
+        orden_sectores = {"VIP": 0, "Gramilla": 1, "Graderia": 2}
+        tickets_evento.sort(key=lambda t: orden_sectores.get(t.sector, 99))
+
+        # Paso 3: mostrar tickets agrupados por sector
+        print(f"\n--- Tickets para el evento {id_evento} ---")
+        for sector in ["VIP", "Gramilla", "Graderia"]:
+            sector_tickets = [t for t in tickets_evento if t.sector == sector]
+            if sector_tickets:
+                print(f"\nSector {sector}:")
+                for t in sector_tickets:
+                    print(t)
+
+
 
