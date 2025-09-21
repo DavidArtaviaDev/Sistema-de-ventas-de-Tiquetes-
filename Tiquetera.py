@@ -213,9 +213,8 @@ class Tiquetera:
                         for t in tickets:
                             t.estado = "agotado"
                         print(f" No hay suficientes entradas disponibles en {sector}. Solicitud cancelada.")
-        
-            else:
-                print(" Solicitud rechazada. Tickets eliminados.")
+                else:
+                  print(" Solicitud rechazada. Tickets eliminados.")
                    
             
           
@@ -328,6 +327,8 @@ class Tiquetera:
 
         elif opcion == "4":
             self.gestor_tickets.ver_tickets_cliente(self.cliente_actual)
+            print("\nTus tiquetes en la cola (pendientes):")
+            self.gestor_tickets.ver_tickets_en_cola(self.cliente_actual, self.solicitudes)
            
         elif opcion == "5":
            

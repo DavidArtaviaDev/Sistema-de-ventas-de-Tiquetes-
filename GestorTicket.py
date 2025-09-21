@@ -180,9 +180,7 @@ class GestorTicket:
 
          # Crear solicitud de compra
         solicitud = SolicitudCompra(cliente, evento_seleccionado, sector, cantidad)
-         
-        
-        
+     
 
 
         # Crear ticket y actualizar evento
@@ -204,6 +202,7 @@ class GestorTicket:
         # Agregar solicitud a la lista global
         if solicitudes_globales is not None:
             solicitudes_globales.append(solicitud)
+            solicitudes_globales.sort(key=lambda s: (0 if s.cliente.es_platinum else 1))
         
         return True
 
@@ -220,3 +219,21 @@ class GestorTicket:
                 encontrados = True
         if not encontrados:
             print("No tienes entradas registradas.")
+    
+    def ver_tickets_en_cola(self, cliente, solicitudes_globales):
+
+        if not solicitudes_globales:
+            print("No hay solicitudes pendientes.")
+            return
+
+        encontrados = False
+        print("\n--- Tickets pendientes en la cola ---")
+        for solicitud in solicitudes_globales:
+            if solicitud.cliente.id_cliente == cliente.id_cliente:
+                encontrados = True
+                print(f"\nSolicitud del evento: {solicitud.evento.nombre} - Sector: {solicitud.sector}")
+                for t in solicitud.obtener_tickets():
+                    print(f"  - Ticket (pendiente): {t}")
+        
+        if not encontrados:
+            print("No tienes tickets pendientes en la cola.")
