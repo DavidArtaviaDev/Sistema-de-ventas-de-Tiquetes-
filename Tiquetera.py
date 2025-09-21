@@ -27,6 +27,7 @@ class Tiquetera:
         # Inicializamos gestor de tickets
         self.gestor_tickets = GestorTicket()
         
+        self.clientes_llegaron_por_evento = {}
         
 
 
@@ -317,7 +318,8 @@ class Tiquetera:
         print("2 - Ordenar eventos por criterio")
         print("3 - Comprar tiquete")
         print("4 - Ver mis tiquetes")
-        print("5 - Cerrar sesión")
+        print("5 - Llegar al evento")  
+        print("6 - Cerrar sesión")
         opcion = input("\nSeleccione una opción: ").strip()
         if opcion == "1":
             self.verTodosLosEventos()
@@ -333,8 +335,39 @@ class Tiquetera:
             self.gestor_tickets.ver_tickets_cliente(self.cliente_actual)
             print("\nTus tiquetes en la cola (pendientes):")
             self.gestor_tickets.ver_tickets_en_cola(self.cliente_actual, self.solicitudes)
+
+        elif opcion == "5":  # NUEVA OPCIÓN
            
-        elif opcion == "5":
+            id_evento = input("Ingrese el código del evento al que llega: ").strip()
+
+            # Leer todos los tickets desde el CSV
+            tickets = CSVManager.cargar_tickets(Config.ARCHIVO_TICKETS)
+
+            # Filtrar solo los tickets de este cliente y evento
+            tickets_cliente = [
+                t for t in tickets
+                if t.id_cliente == self.cliente_actual.id_cliente and t.id_evento == id_evento
+            ]
+
+            if tickets_cliente:
+                print("\nTickets del cliente en el evento:")
+                for t in tickets_cliente:
+                    print(f"  - {t}")
+
+                # Guardamos en la cola global para que el admin los procese
+                if not hasattr(self, "cola_prioridad_actual"):
+                    self.cola_prioridad_actual = []
+
+                self.cola_prioridad_actual.extend(tickets_cliente)
+
+                # Ordenar la cola por prioridad
+                prioridad = {"VIP": 0, "Gramilla": 1, "Graderia": 2}
+                self.cola_prioridad_actual.sort(key=lambda t: prioridad.get(t.sector, 99))
+
+                print("\nTickets añadidos a la cola de prioridad para este evento.")
+            else:
+                print("No tienes tickets registrados para este evento.")
+        elif opcion == "6":
            
             print("\nSesión cerrada.")
             self.cliente_actual = None
@@ -506,35 +539,60 @@ class Tiquetera:
     
     
     def recibirTicketsPorSector(self):
-        # Cargar tickets directamente del CSV
-        tickets = CSVManager.cargar_tickets(Config.ARCHIVO_TICKETS)
-
-        if not tickets:
-            print("No hay tickets registrados en el sistema.")
+        
+        if not hasattr(self, "cola_prioridad_actual") or not self.cola_prioridad_actual:
+            print("No hay tickets en la cola de prioridad (ningún cliente ha llegado al evento).")
             return
 
-        # Paso 1: pedir evento
-        id_evento = input("Ingrese el código del evento: ").strip()
+        # Cargar todos los tickets del CSV (para poder eliminar luego)
+        tickets_csv = CSVManager.cargar_tickets(Config.ARCHIVO_TICKETS) or []
 
-        # Filtrar tickets del evento
-        tickets_evento = [t for t in tickets if t.id_evento == id_evento]
+        print("\n--- Procesando cola de tickets (en orden de prioridad) ---")
+        while self.cola_prioridad_actual:
+            ticket = self.cola_prioridad_actual.pop(0)  # Sacamos el primero en la cola
+            input("\nPresione Enter para procesar el siguiente ticket...")
+
+            print(f"Procesando ticket: {ticket}")
+
+            #  Eliminar del CSV solo este ticket
+            tickets_csv = [t for t in tickets_csv if not (
+                t.id_ticket == ticket.id_ticket and
+                t.id_evento == ticket.id_evento and
+                t.id_cliente == ticket.id_cliente
+            )]
+
+            # Guardar el CSV actualizado
+            fieldnames = ["id_ticket", "id_evento", "id_cliente", "sector", "precio", "estado", "fecha_compra"]
+            filas = [t.to_dict() for t in tickets_csv]
+            CSVManager.guardar_csv(Config.ARCHIVO_TICKETS, fieldnames, filas)
+
+            print(f"Ticket {ticket.id_ticket} eliminado del archivo.")
+
+        print("\nTodos los tickets de la cola han sido procesados y eliminados del CSV.")
+        
+    
+    def generar_cola_prioridad_tickets(self, id_evento: str):
+    
+        tickets_evento = []
+
+        # Recorremos las solicitudes aprobadas para el evento
+        for solicitud in self.solicitudes:
+            # CAMBIO: Solo consideramos tickets del evento correcto y de este cliente
+            if solicitud.evento.id_evento == id_evento:
+                for t in solicitud.obtener_tickets():
+                    if t.id_cliente == self.cliente_actual.id_cliente:
+                        tickets_evento.append(t)
 
         if not tickets_evento:
-            print("No hay tickets emitidos para este evento.")
-            return
+            print("No tienes tickets aprobados para este evento.")
+            return []
 
-        # Paso 2: ordenar todos los tickets del evento por sector
-        orden_sectores = {"VIP": 0, "Gramilla": 1, "Graderia": 2}
-        tickets_evento.sort(key=lambda t: orden_sectores.get(t.sector, 99))
+        # CAMBIO: Ordenar por prioridad VIP > Gramilla > Gradería
+        prioridad = {"VIP": 0, "Gramilla": 1, "Graderia": 2}
+        tickets_evento.sort(key=lambda t: prioridad.get(t.sector, 99))
 
-        # Paso 3: mostrar tickets agrupados por sector
-        print(f"\n--- Tickets para el evento {id_evento} ---")
-        for sector in ["VIP", "Gramilla", "Graderia"]:
-            sector_tickets = [t for t in tickets_evento if t.sector == sector]
-            if sector_tickets:
-                print(f"\nSector {sector}:")
-                for t in sector_tickets:
-                    print(t)
-
+        self.cola_prioridad_actual = tickets_evento
+        print(f"\nSe generó la cola de prioridad para el evento {id_evento}.")
+        return tickets_evento
 
 

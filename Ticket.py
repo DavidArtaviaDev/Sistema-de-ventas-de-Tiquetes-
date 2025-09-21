@@ -28,10 +28,22 @@ class Ticket:
     def __str__(self):
         return (f"Ticket {self.id_ticket} | Evento: {self.id_evento} | Cliente: {self.id_cliente} | "
                 f"Sector: {self.sector} | Precio: ${self.precio} | Estado: {self.estado} | Fecha: {self.fecha_compra}")
-
+    
+    
     #def cancelar_ticket(self):
         if self.estado == "emitido":
             pass
             #self.estado = "Cancelado"
         else:
             print(f"El ticket {self.id_ticket} ya estaba cancelado.")
+            
+    def to_dict(self):
+     return {
+        "id_ticket": self.id_ticket,
+        "id_evento": self.id_evento,
+        "id_cliente": self.id_cliente,
+        "sector": self.sector,
+        "precio": str(self.precio),
+        "estado": self.estado,
+        "fecha_compra": self.fecha_compra
+      }
